@@ -27,7 +27,7 @@ func msgPost(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
-		println("json:", string(body))
+		println("http:8080 body message json:", string(body))
 		var mqttMongodbS mqS.MqttMongodbS
 		err = json.Unmarshal(body, &mqttMongodbS)
 		if err != nil {
@@ -35,8 +35,24 @@ func msgPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		//向mongodb写入数据
-		mongodb.CoonMongodb(mqttMongodbS)
-		w.Write([]byte("Starting 8080 server"))
+		flag := mongodb.CoonMongodb(mqttMongodbS)
+		if flag == false {
+			fmt.Println("manipulate mongo fail ")
+			return
+		}
+		//"Content-Type", "application/json"
+		w.Header().Set("Content-Type", "application/json")
+		var mongoResultS mqS.MongoResultS
+		mongoResultS.Result = 200
+		mongoResultS.Message = "success"
+		result, err := json.Marshal(mongoResultS)
+		if err != nil {
+			fmt.Println("json analysis fail,", err)
+			return
+		}
+		w.Write(result)
+	} else {
+		w.WriteHeader(400)
 	}
 
 }
